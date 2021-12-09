@@ -16,6 +16,8 @@
     </parent>
     <modules>
         <module>shop-9002</module>
+        <module>order-9001</module>
+        <module>common</module>
     </modules>
 
     <properties>
