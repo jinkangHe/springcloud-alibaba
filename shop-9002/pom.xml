@@ -38,6 +38,7 @@
             <scope>test</scope>
         </dependency>
         <!--Spring Cloud Alibaba Nacos discovery -->
+
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>

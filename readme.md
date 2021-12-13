@@ -67,7 +67,7 @@ spring:
     name: shop-9002 #服务名
   cloud:
     nacos:
-    
+  
       config:
         server-addr: 127.0.0.1:8848 #Nacos作为配置中心地址
         file-extension: yaml #指定yaml格式的配置
@@ -140,3 +140,97 @@ spring:
 直接启动项目，在nacos管理页面点击服务列表就可以看到该服务
 
 ![image.png](./assets/1650465797690-image.png)
+
+# OpenFeign组件使用
+
+## 1.概念
+
+**OpenFeign **全称 Spring Cloud OpenFeign，它是 Spring 官方推出的一种声明式服务调用与负载均衡组件，它的出现就是为了替代进入停更维护状态的 Feign。相当于结合了**RestTemplate**和**Ribbon**，使用该组件可以让服务之间的远程调用写法变为同一个服务的本地方法调用写法
+
+## 2.用法
+
+* 引入依赖
+
+在需要进行远程调用的服务中引入
+
+```xml
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+```
+
+同时：
+
+1. nacos 2021 版本已经没有自带ribbon的整合，所以需要引入另一个支持的jar包 loadbalancer
+2. nacos 2021 版本已经取消了对ribbon的支持，所以无法通过修改Ribbon负载均衡的模式来实现nacos提供的负载均衡模式
+
+所以需要修改pom文件
+
+```xml
+<!--排除掉ribbon--> 
+<dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+                </exclusion>
+            </exclusions>
+</dependency>
+<!--加入loadbalancer-->
+<dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+</dependency>
+```
+
+启动类添加@EnableFeignClients注解
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class ShopApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ShopApplication.class,args);
+    }
+}
+```
+
+然后新建一个服务接口，在接口上添加@FeignClient(name = "order-9001")注解，name在注册中心注册的服务名，在接口方法使用@GetMapping("api/order/getOrder")，其中参数表示接口，方法名尽量和调用接口的方法名一样，通过spring注入之后就可以像单体项目一样进行调用了，非常方便！
+
+```java
+@FeignClient(name = "order-9001")
+public interface OrderFeignService {
+    @GetMapping("api/order/getOrder")
+    CommonResult getOrder();
+
+}
+```
+
+```java
+    @Autowired
+    private OrderFeignService orderFeignService;
+
+    @GetMapping("shop")
+    public CommonResult shop() {
+        log.info("获取到请求");
+
+        log.info("远程服务调用.....");
+        CommonResult order = orderFeignService.getOrder();
+        Object data = order.getData();
+        log.info("调用结果：{}",data);
+
+        return CommonResult.success();
+    }
+
+```
+
+![image.png](./assets/1650522026344-image.png)

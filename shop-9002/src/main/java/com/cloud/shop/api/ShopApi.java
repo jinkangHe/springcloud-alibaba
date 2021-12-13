@@ -18,15 +18,14 @@ public class ShopApi {
 
     @Value("${config.info}")
     private String configInfo;
-
-    @Autowired
-    private OrderFeignService orderFeignService;
-
     @GetMapping("serverName")
     public CommonResult serverName() {
 
         return CommonResult.success(configInfo);
     }
+
+    @Autowired
+    private OrderFeignService orderFeignService;
 
     @GetMapping("shop")
     public CommonResult shop() {
@@ -36,6 +35,7 @@ public class ShopApi {
         CommonResult order = orderFeignService.getOrder();
         Object data = order.getData();
         log.info("调用结果：{}",data);
+
         return CommonResult.success();
     }
 
