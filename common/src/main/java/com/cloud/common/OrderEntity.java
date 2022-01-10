@@ -1,4 +1,5 @@
-package com.cloud.order.entity;
+package com.cloud.common;
+
 
 import lombok.Data;
 
@@ -10,4 +11,5 @@ public class OrderEntity {
     private String uuid;
     private List<String> orders;
     private LocalDateTime orderTime;
+    private int port;
 }

@@ -234,3 +234,53 @@ public interface OrderFeignService {
 ```
 
 ![image.png](./assets/1650522026344-image.png)
+
+# 负载均衡（与OpenFeign整合）
+
+## 1.概念
+
+如果一个服务部署到了多台机器，客户端访问的时候就需要根据某一种策略去选择一台机器进行访问，为了让多台服务能均匀的处理客户端的请求，就是负载均衡。在Feign中是客户端负载均衡，也就是说是客户端获取到了所有服务的实例之后自己决定去访问哪一台！
+
+## 2.默认负载均衡
+
+当前版本在默认的情况下，启用了Ribbon，使用的是LoadBalancer提供的循环策略（而且只提供了两种方式，另外一种是随机），如果想更换随机的策略，需要使用@Bean的方式实现**RandomLoadBalancer**
+
+> 注意：这里不要使用@Configuration注解，不然就是全局生效，做不到个性化配置了。
+
+```java
+public class RandomBalancerConfig{
+    @Bean
+    ReactorLoadBalancer<ServiceInstance> randomLoadBalancer(Environment environment,
+                                                            LoadBalancerClientFactory loadBalancerClientFactory) {
+        String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+        return new RandomLoadBalancer(loadBalancerClientFactory
+                .getLazyProvider(name, ServiceInstanceListSupplier.class),
+                name);
+    }
+
+
+}
+```
+
+然后可以在OpenFeign客户端上添加如下注解@LoadBalancerClient，其中name表示对哪一个服务进行负载均衡，configuration表示使用哪种策略（个性化配置）
+
+```java
+@FeignClient(name = "order-9001")
+@LoadBalancerClient(name = "order-9001",configuration = RandomBalancerConfig.class)
+public interface OrderFeignService {
+
+    @GetMapping("api/order/getOrder")
+    OrderEntity getOrder();
+
+}
+```
+
+## 3.自定义负载均衡
+
+> 详见 com.cloud.shop.balancer.TimeBalancer
+
+大部分代码可以照搬LoadBalancer提供的两种策略源码，详见org.springframework.cloud.loadbalancer.core.RandomLoadBalancer，org.springframework.cloud.loadbalancer.core.RoundRobinLoadBalancer
+
+![image.png](./assets/1650814000131-image.png)
+
+用法和上一节一样，对指定的服务使用指定的配置。

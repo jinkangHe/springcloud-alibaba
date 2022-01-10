@@ -1,6 +1,7 @@
 package com.cloud.shop.api;
 
 import com.cloud.common.CommonResult;
+import com.cloud.common.OrderEntity;
 import com.cloud.shop.openfeignservice.OrderFeignService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +33,10 @@ public class ShopApi {
         log.info("获取到请求");
 
         log.info("远程服务调用.....");
-        CommonResult order = orderFeignService.getOrder();
-        Object data = order.getData();
-        log.info("调用结果：{}",data);
+        OrderEntity order = orderFeignService.getOrder();
+        log.info("调用结果：{}",order);
 
-        return CommonResult.success();
+        return CommonResult.success(order);
     }
 
 
